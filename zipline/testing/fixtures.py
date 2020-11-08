@@ -6,7 +6,7 @@ import warnings
 from logbook import NullHandler, Logger
 import numpy as np
 import pandas as pd
-from pandas.core.common import PerformanceWarning
+from pandas.errors import PerformanceWarning
 from six import with_metaclass, iteritems, itervalues, PY2
 import responses
 from toolz import flip, groupby, merge

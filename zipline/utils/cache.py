@@ -191,7 +191,7 @@ class dataframe_cache(MutableMapping):
     clean_on_failure : bool, optional
         Should the directory be cleaned up if an exception is raised in the
         context manager.
-    serialize : {'msgpack', 'pickle:<n>'}, optional
+    serialize : {'pyarrow', 'pickle:<n>'}, optional
         How should the data be serialized. If ``'pickle'`` is passed, an
         optional pickle protocol can be passed like: ``'pickle:3'`` which says
         to use pickle protocol 3.
@@ -207,20 +207,21 @@ class dataframe_cache(MutableMapping):
                  path=None,
                  lock=None,
                  clean_on_failure=True,
-                 serialization='msgpack'):
+                 serialization='pyarrow'):
         self.path = path if path is not None else mkdtemp()
         self.lock = lock if lock is not None else nop_context
         self.clean_on_failure = clean_on_failure
 
-        if serialization == 'msgpack':
-            self.serialize = pd.DataFrame.to_msgpack
-            self.deserialize = pd.read_msgpack
+        if serialization == 'pyarrow':
+            import pyarrow as pa
+            self.serialize = pa.Table.from_pandas
+            self.deserialize = pa.Table.to_pandas
             self._protocol = None
         else:
             s = serialization.split(':', 1)
             if s[0] != 'pickle':
                 raise ValueError(
-                    "'serialization' must be either 'msgpack' or 'pickle[:n]'",
+                    "'serialization' must be either 'pyarrow' or 'pickle[:n]'",
                 )
             self._protocol = int(s[1]) if len(s) == 2 else None
 

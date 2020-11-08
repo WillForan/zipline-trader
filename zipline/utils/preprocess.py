@@ -6,13 +6,19 @@ from types import CodeType
 from uuid import uuid4
 
 from toolz.curried.operator import getitem
-from six import viewkeys, exec_, PY3
+from six import viewkeys, exec_
 
 from zipline.utils.compat import getargspec, wraps
 
 
+# py3.8 update from @gerrymanoim
+# https://github.com/quantopian/trading_calendars/pull/105/commits/7430982d707cc92b541ef6b9f20cc6d538a3c6a6
 _code_argorder = (
-    ('co_argcount', 'co_kwonlyargcount') if PY3 else ('co_argcount',)
+    ('co_argcount', )
+) + (
+    ('co_kwonlyargcount', ) if hasattr(CodeType, 'co_kwonlyargcount') else ()
+) + (
+    ('co_posonlyargcount', ) if hasattr(CodeType, 'co_posonlyargcount') else ()
 ) + (
     'co_nlocals',
     'co_stacksize',
@@ -148,7 +154,7 @@ def _build_preprocessed_function(func,
     Build a preprocessed function with the same signature as `func`.
 
     Uses `exec` internally to build a function that actually has the same
-    signature as `func.
+    signature as `func`.
     """
     format_kwargs = {'func_name': func.__name__}
 

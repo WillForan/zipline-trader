@@ -285,12 +285,29 @@ def _check_symbol_mappings(df, exchanges, asset_exchange):
     ------
     ValueError
         Raised when there are ambiguous symbol mappings.
+
+    # 20201108WF - reflects current code. maybe not intended function!
+    >>> assetex = pd.Series(['NYSE', 'TSE'])
+    >>> exchanges = pd.DataFrame({'exchange': ['NYSE','TSE'],
+    >>>                           'country_code': ['US','JP']})
+    >>> fake_df = lambda syms:
+    >>>     pd.DataFrame({'sid': range(len(syms)), 'start_date': 0,
+    >>>                   'symbol': syms, 'end_date': 1,
+    >>>                   'share_class_symbol': '', 'company_symbol': syms})
+    >>> _check_symbol_mappings(fake_df(['A','B']), exchanges, assetex)
+    >>> _check_symbol_mappings(fake_df(['A','A']), exchanges, assetex)
+    >>> _check_symbol_mappings(fake_df(['A','A']), exchanges, pd.Series(['NYSE', 'NYSE']))
+    ValueError: Ambiguous ownership ...
     """
     mappings = df.set_index('sid')[list(mapping_columns)].copy()
-    mappings['country_code'] = exchanges['country_code'][
-        asset_exchange.loc[df['sid']]
-    ].values
+    these_exchanges = asset_exchange.loc[df['sid']]
+    # from nose.tools import set_trace; set_trace()
+    if 'exchange' in exchanges.columns:
+        exchanges = exchanges.set_index('exchange')
+    these_ccodes = exchanges.loc[these_exchanges]['country_code'].values
+    mappings = mappings.assign(country_code=these_ccodes)
     ambigious = {}
+    #from nose.tools import set_trace; set_trace()
 
     def check_intersections(persymbol):
         intersections = list(intersecting_ranges(map(
